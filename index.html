@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="ca" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FASI·LAB — La fase i les seves interaccions | CFGM Megafonia i Sonorització</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            console: {
+              950: '#070b12',
+              900: '#0b111d',
+              800: '#131c2e',
+              700: '#1d2940',
+              600: '#2b3b59'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    /* Estils personalitzats per a consola pro-àudio i compatibilitat iframe */
+    html, body {
+      background-color: #070b12;
+      color: #e2e8f0;
+      scroll-behavior: smooth;
+    }
+
+    /* Sliders estil taula de mescles */
+    input[type="range"].fader {
+      -webkit-appearance: none;
+      appearance: none;
+      background: #1d2940;
+      height: 8px;
+      border-radius: 999px;
+      outline: none;
+      border: 1px solid #2b3b59;
+    }
+    input[type="range"].fader::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      background: #06b6d4;
+      border: 2px solid #cffafe;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+      transition: transform 0.1s ease;
+    }
+    input[type="range"].fader::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+    }
+    input[type="range"].fader::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      background: #06b6d4;
+      border: 2px solid #cffafe;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+    }
+
+    /* Scrollbar discret */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b111d;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2b3b59;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #06b6d4;
+    }
+
+    /* LED glow */
+    .led-cyan { box-shadow: 0 0 10px rgba(6, 182, 212, 0.7); }
+    .led-emerald { box-shadow: 0 0 10px rgba(16, 185, 129, 0.7); }
+    .led-amber { box-shadow: 0 0 10px rgba(245, 158, 11, 0.7); }
+    .led-red { box-shadow: 0 0 10px rgba(239, 68, 68, 0.7); }
+
+    /* Vista d'impressió / PDF neta i llegible en paper blanc */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        font-size: 11pt !important;
+      }
+      #app-shell, #gemini-modal {
+        display: none !important;
+      }
+      #print-report {
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .print-break-inside-avoid {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-console-950 text-slate-200 antialiased selection:bg-cyan-500/30 selection:text-cyan-200">
+
+  <!-- CONTENIDOR PRINCIPAL DE L'APLICACIÓ -->
+  <div id="app-shell" class="flex flex-col min-h-screen">
+
+    <!-- CAPÇALERA STICKY -->
+    <header class="sticky top-0 z-30 border-b border-console-700/80 bg-console-900/95 backdrop-blur-md">
+      <div class="max-w-7xl mx-auto px-3 sm:px-6 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <!-- Marca i Títol -->
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 shrink-0">
+              <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12c2-6 4-6 6 0s4 6 6 0 4-6 6 0" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12c2 4 4 4 6 0s4-4 6 0 4 4 6 0" opacity="0.45" />
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">FASI·LAB</h1>
+                <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                  CFGM Megafonia i Sonorització
+                </span>
+              </div>
+              <p class="text-xs text-slate-400">La fase i les seves interaccions acústiques i elèctriques</p>
+            </div>
+          </div>
+
+          <!-- Botons mòbil ràpids -->
+          <div class="flex lg:hidden items-center gap-2">
+            <button type="button" onclick="openGeminiModal()" class="px-2.5 py-2 rounded-lg bg-gradient-to-r from-cyan-600 to-indigo-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow">
+              <span>IA Gemini</span>
+            </button>
+            <button type="button" onclick="printReport()" title="Imprimeix / Desa informe (PDF)" class="p-2 rounded-lg bg-console-800 border border-console-600 text-slate-200 hover:border-cyan-400">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Selector d'Escenari + Accions Desktop -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+          <div class="flex items-center gap-2 bg-console-800 border border-console-600 rounded-xl px-3 py-1.5">
+            <label for="profile-selector" class="text-xs font-semibold text-cyan-400 whitespace-nowrap uppercase tracking-wider">Escenari:</label>
+            <select id="profile-selector" onchange="selectProfile(this.value)" class="bg-transparent text-sm font-medium text-white focus:outline-none cursor-pointer w-full sm:w-auto">
+              <option value="megafonia" class="bg-console-900">1. Megafonia distribuïda (Passadís / Nau)</option>
+              <option value="subtop" class="bg-console-900">2. Concert en directe (Alineament Sub + Top)</option>
+              <option value="micros" class="bg-console-900">3. Microfonia dual / Escenari (Regla 3:1)</option>
+              <option value="delay" class="bg-console-900">4. Sala polivalent (Torres de retard / Haas)</option>
+            </select>
+          </div>
+
+          <div class="hidden lg:flex items-center gap-2">
+            <button type="button" onclick="openGeminiModal()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-semibold flex items-center gap-2 shadow-lg shadow-cyan-900/30 transition">
+              <span id="gemini-key-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+              <span>Assistent IA Gemini</span>
+            </button>
+
+            <button type="button" onclick="printReport()" class="px-3.5 py-2 rounded-xl bg-console-800 hover:bg-console-700 border border-console-600 hover:border-cyan-400/60 text-slate-100 text-xs sm:text-sm font-medium flex items-center gap-2 transition">
+              <svg class="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              <span>Imprimeix / Desa informe (PDF)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- COS PRINCIPAL -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-5 space-y-6">
+
+      <!-- BÀNER ADAPTATIU DEL PERFIL -->
+      <section class="rounded-2xl bg-gradient-to-r from-console-900 via-console-800 to-console-900 border border-console-700 p-4 sm:p-5 shadow-xl">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="space-y-1.5 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <span id="profile-badge" class="px-2.5 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                Escenari actiu
+              </span>
+              <span id="profile-focus" class="text-xs font-mono text-emerald-400"></span>
+            </div>
+            <h2 id="profile-title" class="text-lg sm:text-xl font-bold text-white"></h2>
+            <p id="profile-desc" class="text-sm text-slate-300 leading-relaxed"></p>
+            <div class="pt-1 flex items-start gap-2 text-xs text-amber-300/90 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+              <svg class="w-4 h-4 shrink-0 mt-0.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span><strong>Criteri tècnic:</strong> <span id="profile-tip"></span></span>
+            </div>
+          </div>
+
+          <!-- Nom de l'alumne per a l'informe PDF -->
+          <div class="lg:w-64 shrink-0 bg-console-950/60 border border-console-700 rounded-xl p-3 space-y-1.5">
+            <label for="student-name" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400">Alumne / Tècnic (per a l'informe PDF)</label>
+            <input id="student-name" type="text" placeholder="Ex: Marc Puig — 2n CFGM" class="w-full px-2.5 py-1.5 rounded-lg bg-console-900 border border-console-600 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400" />
+          </div>
+        </div>
+      </section>
+
+      <!-- GRAELLA PRINCIPAL: CONFIGURADOR + SIMULADOR -->
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+
+        <!-- MÒDUL 2: EINA DE CÀLCUL / CONFIGURADOR PRÀCTIC (5 columnes en XL) -->
+        <section class="xl:col-span-5 rounded-2xl bg-console-900 border border-console-700 shadow-xl overflow-hidden">
+          <div class="px-5 py-4 border-b border-console-700 bg-console-800/60 flex items-center justify-between gap-2">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 led-cyan"></span>
+                Configurador i Càlcul d'Alineament
+              </h3>
+              <p class="text-xs text-slate-400">Introdueix les dades de la instal·lació per calcular el desfasament i el retard DSP</p>
+            </div>
+            <button type="button" onclick="resetProfileDefaults()" class="text-xs px-2.5 py-1 rounded-lg bg-console-700 hover:bg-console-600 text-slate-200 transition">
+              Valors per defecte
+            </button>
+          </div>
+
+          <div class="p-5 space-y-5">
+            <!-- Paràmetres d'entrada -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="calc-freq" class="block text-xs font-semibold text-slate-300 mb-1">Freqüència d'anàlisi / tall (Hz)</label>
+                <input id="calc-freq" type="number" min="20" max="20000" step="1" value="100" oninput="updateCalculator()" class="w-full px-3 py-2 rounded-lg bg-console-950 border border-console-600 text-white font-mono text-sm focus:outline-none focus:border-cyan-400" />
+                <div class="flex flex-wrap gap-1 mt-1.5">
+                  <button type="button" onclick="setCalcFreq(80)" class="px-2 py-0.5 text-[11px] font-mono rounded bg-console-800 hover:bg-cyan-500/20 border border-console-600 text-slate-300">80 Hz</button>
+                  <button type="button" onclick="setCalcFreq(100)" class="px-2 py-0.5 text-[11px] font-mono rounded bg-console-800 hover:bg-cyan-500/20 border border-console-600 text-slate-300">100 Hz</button>
+                  <button type="button" onclick="setCalcFreq(500)" class="px-2 py-0.5 text-[11px] font-mono rounded bg-console-800 hover:bg-cyan-500/20 border border-console-600 text-slate-300">500 Hz</button>
+                  <button type="button" onclick="setCalcFreq(1000)" class="px-2 py-0.5 text-[11px] font-mono rounded bg-console-800 hover:bg-cyan-500/20 border border-console-600 text-slate-300">1 kHz</button>
+                </div>
+              </div>
+
+              <div>
+                <label for="calc-temp" class="block text-xs font-semibold text-slate-300 mb-1">Temperatura ambient (°C)</label>
+                <input id="calc-temp" type="number" min="-10" max="50" step="0.5" value="20" oninput="updateCalculator()" class="w-full px-3 py-2 rounded-lg bg-console-950 border border-console-600 text-white font-mono text-sm focus:outline-none focus:border-cyan-400" />
+                <p class="text-[11px] text-slate-400 mt-1.5">Afecta la velocitat del so ($c$)</p>
+              </div>
+
+              <div>
+                <label id="label-d1" for="calc-d1" class="block text-xs font-semibold text-cyan-300 mb-1">Distància Font A al punt d'escolta (m)</label>
+                <input id="calc-d1" type="number" min="0.05" max="200" step="0.05" value="4.00" oninput="updateCalculator()" class="w-full px-3 py-2 rounded-lg bg-console-950 border border-console-600 text-white font-mono text-sm focus:outline-none focus:border-cyan-400" />
+              </div>
+
+              <div>
+                <label id="label-d2" for="calc-d2" class="block text-xs font-semibold text-amber-300 mb-1">Distància Font B al punt d'escolta (m)</label>
+                <input id="calc-d2" type="number" min="0.05" max="200" step="0.05" value="5.72" oninput="updateCalculator()" class="w-full px-3 py-2 rounded-lg bg-console-950 border border-console-600 text-white font-mono text-sm focus:outline-none focus:border-amber-400" />
+              </div>
+            </div>
+
+            <!-- Inversió de polaritat Font B -->
+            <div class="flex items-center justify-between p-3 rounded-xl bg-console-950/80 border border-console-700">
+              <div>
+                <span class="text-sm font-semibold text-white">Inversor de Polaritat Font B ($\varnothing$ 180°)</span>
+                <p class="text-xs text-slate-400">Canvia el signe elèctric (+/-) o cablejat balancejat pin 2/3</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input id="calc-polarity" type="checkbox" onchange="updateCalculator()" class="sr-only peer" />
+                <div class="w-12 h-6 bg-console-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-6 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500"></div>
+              </label>
+            </div>
+
+            <!-- Resultats instantanis -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              <div class="p-3 rounded-xl bg-console-950 border border-console-800">
+                <span class="text-[11px] uppercase tracking-wider text-slate-400 block">Velocitat so ($c$)</span>
+                <span id="res-speed" class="text-base font-mono font-bold text-white">343.4 m/s</span>
+              </div>
+              <div class="p-3 rounded-xl bg-console-950 border border-console-800">
+                <span class="text-[11px] uppercase tracking-wider text-slate-400 block">Longitud d'ona ($\lambda$)</span>
+                <span id="res-lambda" class="text-base font-mono font-bold text-cyan-300">3.43 m</span>
+              </div>
+              <div class="p-3 rounded-xl bg-console-950 border border-console-800">
+                <span class="text-[11px] uppercase tracking-wider text-slate-400 block">Dif. camí ($\Delta d$)</span>
+                <span id="res-deltad" class="text-base font-mono font-bold text-white">1.72 m</span>
+              </div>
+              <div class="p-3 rounded-xl bg-console-950 border border-console-800">
+                <span class="text-[11px] uppercase tracking-wider text-slate-400 block">Retard acústic ($\Delta t$)</span>
+                <span id="res-deltat" class="text-base font-mono font-bold text-amber-300">5.01 ms</span>
+              </div>
+              <div class="p-3 rounded-xl bg-console-950 border border-console-800">
+                <span class="text-[11px] uppercase tracking-wider text-slate-400 block">Desfasament ($\Delta\varphi$)</span>
+                <span id="res-phase" class="text-base font-mono font-bold text-indigo-300">180°</span>
+              </div>
+              <div class="p-3 rounded-xl bg-console-950 border border-console-800">
+                <span class="text-[11px] uppercase tracking-wider text-slate-400 block">Suma estimada</span>
+                <span id="res-gain" class="text-base font-mono font-bold text-rose-400">-∞ dB</span>
+              </div>
+            </div>
+
+            <!-- Panell de diagnòstic i recomanació DSP -->
+            <div id="calc-diagnosis-box" class="p-4 rounded-xl border transition-colors bg-console-950 border-console-700 space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Diagnòstic d'interacció</span>
+                <span id="calc-status-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold"></span>
+              </div>
+              <p id="calc-recommendation" class="text-sm text-slate-200 leading-relaxed"></p>
+              <p id="calc-profile-check" class="text-xs text-cyan-300 font-medium pt-1 border-t border-console-800"></p>
+            </div>
+
+            <!-- Botó per sincronitzar amb el simulador -->
+            <button type="button" onclick="syncCalcToSim()" class="w-full py-2.5 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-cyan-900/30 transition">
+              <span>Carrega aquests paràmetres al Simulador Visual</span>
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- MÒDUL 3: SIMULADOR VISUAL INTERACTIU (7 columnes en XL) -->
+        <section class="xl:col-span-7 rounded-2xl bg-console-900 border border-console-700 shadow-xl overflow-hidden">
+          <div class="px-5 py-4 border-b border-console-700 bg-console-800/60 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 led-emerald"></span>
+                Simulador Visual en Temps Real (Oscil·loscopi, Fasor i Filtre Pinta)
+              </h3>
+              <p class="text-xs text-slate-400">Modifica el retard, la freqüència, l'amplitud i la polaritat per observar la resposta del sistema</p>
+            </div>
+
+            <!-- Botó opcional Web Audio segur -->
+            <button id="audio-toggle-btn" type="button" onclick="toggleAudioMonitor()" class="px-3 py-1.5 rounded-lg bg-console-700 hover:bg-console-600 border border-console-600 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition">
+              <svg class="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+              <span id="audio-toggle-label">Escolta el to (Silenciat)</span>
+            </button>
+          </div>
+
+          <div class="p-5 space-y-5">
+            <!-- CONTROLS DEL SIMULADOR -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-console-950/70 p-4 rounded-xl border border-console-800">
+              <!-- Retard temporal -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <label for="sim-delay" class="text-xs font-semibold text-slate-300">Retard / Diferència temporal ($\Delta t$)</label>
+                  <span id="sim-delay-val" class="text-xs font-mono font-bold text-amber-300">0.00 ms</span>
+                </div>
+                <input id="sim-delay" type="range" min="0" max="15" step="0.01" value="0" oninput="updateSimulator()" class="w-full fader" />
+                <div class="flex flex-wrap gap-1 pt-0.5">
+                  <button type="button" onclick="setSimPhasePreset(0)" class="px-2 py-0.5 text-[10px] font-mono rounded bg-console-800 hover:bg-cyan-500/20 border border-console-700 text-slate-300">0° (En fase)</button>
+                  <button type="button" onclick="setSimPhasePreset(90)" class="px-2 py-0.5 text-[10px] font-mono rounded bg-console-800 hover:bg-cyan-500/20 border border-console-700 text-slate-300">90°</button>
+                  <button type="button" onclick="setSimPhasePreset(120)" class="px-2 py-0.5 text-[10px] font-mono rounded bg-console-800 hover:bg-cyan-500/20 border border-console-700 text-slate-300">120° (0 dB)</button>
+                  <button type="button" onclick="setSimPhasePreset(180)" class="px-2 py-0.5 text-[10px] font-mono rounded bg-console-800 hover:bg-rose-500/20 border border-console-700 text-rose-300">180° (Cancel·lació)</button>
+                </div>
+              </div>
+
+              <!-- Freqüència -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <label for="sim-freq" class="text-xs font-semibold text-slate-300">Freqüència de prova ($f$)</label>
+                  <span id="sim-freq-val" class="text-xs font-mono font-bold text-cyan-300">250 Hz</span>
+                </div>
+                <input id="sim-freq" type="range" min="40" max="2000" step="1" value="250" oninput="updateSimulator()" class="w-full fader" />
+                <p class="text-[11px] text-slate-400">Període $T = 1/f$: <span id="sim-period-val" class="font-mono text-slate-300">4.00 ms</span></p>
+              </div>
+
+              <!-- Nivell relatiu Font B -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <label for="sim-levelb" class="text-xs font-semibold text-slate-300">Nivell Font B respecte A (dB)</label>
+                  <span id="sim-levelb-val" class="text-xs font-mono font-bold text-emerald-300">0.0 dB</span>
+                </div>
+                <input id="sim-levelb" type="range" min="-24" max="0" step="0.5" value="0" oninput="updateSimulator()" class="w-full fader" />
+                <p class="text-[11px] text-slate-400">Baixar a ≤ -10 dB redueix dràsticament el filtre pinta (Regla 3:1)</p>
+              </div>
+
+              <!-- Interruptors Polaritat i Mute -->
+              <div class="flex flex-col justify-between gap-2">
+                <span class="text-xs font-semibold text-slate-300">Commutadors de canal</span>
+                <div class="grid grid-cols-3 gap-2">
+                  <button id="btn-mute-a" type="button" onclick="toggleMute('A')" class="py-2 px-2 rounded-lg text-xs font-bold border border-cyan-500/40 bg-cyan-500/15 text-cyan-300 transition">
+                    FONT A: ON
+                  </button>
+                  <button id="btn-mute-b" type="button" onclick="toggleMute('B')" class="py-2 px-2 rounded-lg text-xs font-bold border border-amber-500/40 bg-amber-500/15 text-amber-300 transition">
+                    FONT B: ON
+                  </button>
+                  <button id="btn-pol-b" type="button" onclick="toggleSimPolarity()" class="py-2 px-2 rounded-lg text-xs font-bold border border-console-600 bg-console-800 text-slate-300 transition">
+                    $\varnothing$ B: 0°
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- INDICADOR D'ESTAT / VÚMETRE DE SUMA RESULTANT -->
+            <div class="bg-console-950 rounded-xl border border-console-800 p-4 space-y-2.5">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5">
+                  <span id="sim-led" class="w-3 h-3 rounded-full bg-emerald-400 led-emerald"></span>
+                  <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Resultat de la suma a <span id="sim-curr-freq-label" class="font-mono text-cyan-300">250 Hz</span></span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-xs font-mono text-slate-400">Desfasament: <strong id="sim-curr-phase" class="text-white">0°</strong></span>
+                  <span id="sim-gain-badge" class="px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">+6.02 dB</span>
+                </div>
+              </div>
+
+              <!-- Barra Vúmetre de -24 dB a +6 dB -->
+              <div class="relative h-5 bg-console-900 rounded-full overflow-hidden border border-console-700">
+                <!-- Marca de 0 dB (80% de l'escala -24..+6) -->
+                <div class="absolute top-0 bottom-0 left-[80%] w-0.5 bg-white/60 z-10" title="0 dB (Nivell d'una sola font)"></div>
+                <div id="sim-meter-bar" class="h-full transition-all duration-150 bg-gradient-to-r from-rose-500 via-amber-400 to-emerald-400" style="width: 100%;"></div>
+              </div>
+              <div class="flex justify-between text-[10px] font-mono text-slate-500">
+                <span>-24 dB (Cancel·lació)</span>
+                <span>-6 dB</span>
+                <span class="text-slate-300">0 dB (1 font)</span>
+                <span class="text-emerald-400">+6 dB (Suma perfecta)</span>
+              </div>
+            </div>
+
+            <!-- GRÀFICS EN CANVAS: OSCIL·LOSCOPI + FASOR -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <!-- Oscil·loscopi (2 columnes) -->
+              <div class="md:col-span-2 bg-console-950 rounded-xl border border-console-800 p-3 flex flex-col">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-bold text-slate-300">Oscil·loscopi: Ones A, B i Suma (A+B)</span>
+                  <div class="flex items-center gap-3 text-[10px] font-mono">
+                    <span class="text-cyan-400">--- A</span>
+                    <span class="text-amber-400">--- B</span>
+                    <span id="legend-sum" class="text-emerald-400 font-bold">― A+B</span>
+                  </div>
+                </div>
+                <div class="relative w-full h-48">
+                  <canvas id="canvas-scope" class="w-full h-full block rounded-lg"></canvas>
+                </div>
+              </div>
+
+              <!-- Diagrama Fasorial (1 columna) -->
+              <div class="bg-console-950 rounded-xl border border-console-800 p-3 flex flex-col">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-bold text-slate-300">Diagrama Fasorial</span>
+                  <span class="text-[10px] font-mono text-slate-400">Vectors</span>
+                </div>
+                <div class="relative w-full h-48">
+                  <canvas id="canvas-phasor" class="w-full h-full block rounded-lg"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- GRÀFIC FILTRE PINTA (RESPOSTA EN FREQÜÈNCIA) -->
+            <div class="bg-console-950 rounded-xl border border-console-800 p-3 space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="text-xs font-bold text-slate-300">Analitzador d'Interferència (Filtre Pinta / Comb Filtering: 20 Hz – 4.000 Hz)</span>
+                <span id="comb-notches-info" class="text-[11px] font-mono text-rose-300">Sense retard ($\Delta t = 0$): resposta plana</span>
+              </div>
+              <div class="relative w-full h-44">
+                <canvas id="canvas-comb" class="w-full h-full block rounded-lg"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- SECCIÓ DIDÀCTICA: CONCEPTES CLAU CFGM -->
+      <section class="rounded-2xl bg-console-900 border border-console-700 p-5 shadow-xl">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-cyan-400 mb-3">Guia Ràpida de Conceptes Clau (CFGM Megafonia i Sonorització)</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs leading-relaxed">
+          <div class="p-3.5 rounded-xl bg-console-950 border border-console-800 space-y-1.5">
+            <h4 class="font-bold text-white text-sm">1. Fase ($\varphi$) vs Polaritat ($\varnothing$)</h4>
+            <p class="text-slate-400">La <strong class="text-slate-200">polaritat</strong> és una inversió fixa (+/-) independent de la freqüència (180° a tot l'espectre). La <strong class="text-slate-200">fase</strong> depèn del temps ($\Delta t$) i varia amb la freqüència: $\Delta\varphi = 360^\circ \cdot f \cdot \Delta t$.</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-console-950 border border-console-800 space-y-1.5">
+            <h4 class="font-bold text-white text-sm">2. Suma Constructiva i Cancel·lació</h4>
+            <p class="text-slate-400">Dues fonts idèntiques a <strong class="text-emerald-400">0°</strong> sumen <strong class="text-emerald-400">+6 dB</strong>. A <strong class="text-amber-300">120°</strong> sumen <strong class="text-amber-300">0 dB</strong> (sense guany). A <strong class="text-rose-400">180°</strong> produeixen cancel·lació destructiva total.</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-console-950 border border-console-800 space-y-1.5">
+            <h4 class="font-bold text-white text-sm">3. Filtre Pinta i Regla 3:1</h4>
+            <p class="text-slate-400">Un retard constant entre dues fonts crea pics i valls periòdiques (filtre pinta). En microfonia, mantén els micros separats almenys <strong class="text-cyan-300">3 vegades</strong> la distància micro-font per atenuar la diafonia >10 dB.</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-console-950 border border-console-800 space-y-1.5">
+            <h4 class="font-bold text-white text-sm">4. Línies de Retard i Efecte Haas</h4>
+            <p class="text-slate-400">En altaveus de reforç (delays), alineem el temps al sistema principal i sovint afegim <strong class="text-cyan-300">10–15 ms extra</strong> perquè l'oïda localitzi el so a l'escenari (Efecte de Precedència).</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- PEU DE PÀGINA -->
+    <footer class="border-t border-console-800 bg-console-900/70 py-4 px-6 text-center text-xs text-slate-500">
+      FASI·LAB · Eina educativa interactiva per a CFGM en Instal·lacions de Megafonia i Sonorització · Execució 100% client-side.
+    </footer>
+  </div>
+
+  <!-- MÒDUL 4: MODAL ASSISTENT IA GEMINI (BYOK) -->
+  <div id="gemini-modal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-console-900 border border-console-600 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
+      <!-- Capçalera Modal -->
+      <div class="px-5 py-3.5 bg-console-800 border-b border-console-700 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">AI</div>
+          <div>
+            <h3 class="text-base font-bold text-white">Assistent IA Gemini</h3>
+            <p class="text-[11px] text-slate-400">Tutor tècnic en temps real · Model BYOK (clau pròpia a localStorage)</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeGeminiModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-console-700">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Configuració API Key BYOK -->
+      <div class="px-5 py-3 bg-console-950/90 border-b border-console-800 space-y-2">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <label for="gemini-api-key" class="text-xs font-semibold text-slate-300">
+            Clau API de Google AI Studio (es desa només al teu navegador):
+          </label>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-[11px] text-cyan-400 hover:underline">
+            Obtén una clau gratuïta a Google AI Studio ↗
+          </a>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input id="gemini-api-key" type="password" placeholder="Enganxa la teva API Key (AIza...)" class="flex-1 px-3 py-1.5 rounded-lg bg-console-900 border border-console-600 text-xs font-mono text-white focus:outline-none focus:border-cyan-400" />
+          <div class="flex gap-2">
+            <button type="button" onclick="saveApiKey()" class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold">Desa clau</button>
+            <button type="button" onclick="clearApiKey()" class="px-3 py-1.5 rounded-lg bg-console-800 hover:bg-rose-600/30 border border-console-600 text-slate-300 text-xs">Esborra</button>
+          </div>
+        </div>
+        <div id="gemini-key-status" class="text-[11px] text-amber-400"></div>
+      </div>
+
+      <!-- Context ocult resumit per a l'usuari -->
+      <div class="px-5 py-2 bg-console-800/40 border-b border-console-800 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+        <span>Context enviat automàticament: <strong id="gemini-context-preview" class="text-cyan-300 font-mono"></strong></span>
+        <button type="button" onclick="clearChatHistory()" class="text-slate-400 hover:text-white underline">Neteja conversa</button>
+      </div>
+
+      <!-- 3 Botons d'acció ràpida -->
+      <div class="px-5 py-3 border-b border-console-800 grid grid-cols-1 sm:grid-cols-3 gap-2 bg-console-900">
+        <button type="button" onclick="askGeminiQuick('explain')" class="px-3 py-2 rounded-xl bg-console-800 hover:bg-cyan-600/20 border border-console-600 hover:border-cyan-400 text-left text-xs font-semibold text-cyan-200 transition">
+          a) Explica-m'ho adaptat al meu perfil
+        </button>
+        <button type="button" onclick="askGeminiQuick('challenge')" class="px-3 py-2 rounded-xl bg-console-800 hover:bg-indigo-600/20 border border-console-600 hover:border-indigo-400 text-left text-xs font-semibold text-indigo-200 transition">
+          b) Genera un cas pràctic o repte per resoldre
+        </button>
+        <button type="button" onclick="askGeminiQuick('audit')" class="px-3 py-2 rounded-xl bg-console-800 hover:bg-emerald-600/20 border border-console-600 hover:border-emerald-400 text-left text-xs font-semibold text-emerald-200 transition">
+          c) Analitza i audita els meus paràmetres actuals
+        </button>
+      </div>
+
+      <!-- Àrea de conversa -->
+      <div id="gemini-chat-log" class="flex-1 overflow-y-auto p-5 space-y-4 bg-console-950/50 text-sm">
+        <div class="p-3.5 rounded-xl bg-console-800/70 border border-console-700 text-slate-300 text-xs leading-relaxed">
+          Hola! Soc el teu tutor de <strong>CFGM en Megafonia i Sonorització</strong>. Tinc accés al teu escenari actiu, als càlculs d'alineament i a l'estat actual del simulador de fase. Prem qualsevol dels 3 botons superiors o fes-me una pregunta lliure!
+        </div>
+      </div>
+
+      <!-- Entrada de pregunta lliure -->
+      <form onsubmit="handleGeminiSubmit(event)" class="p-3.5 bg-console-900 border-t border-console-700 flex gap-2">
+        <input id="gemini-user-input" type="text" placeholder="Escriu una pregunta sobre fase, polaritat, filtre pinta, delays..." class="flex-1 px-3.5 py-2 rounded-xl bg-console-950 border border-console-600 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400" />
+        <button id="gemini-send-btn" type="submit" class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-sm font-semibold transition">
+          Envia
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MÒDUL 5: INFORME IMPRIMIBLE / PDF (ocult en pantalla, visible en impressió) -->
+  <div id="print-report" class="hidden max-w-4xl mx-auto p-8 text-slate-900 bg-white">
+    <div class="border-b-2 border-slate-900 pb-4 mb-6 flex justify-between items-end">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">INFORME TÈCNIC: LA FASE I LES SEVES INTERACCIONS</h1>
+        <p class="text-sm text-slate-600">CFGM Instal·lacions de Megafonia i Sonorització — FASI·LAB</p>
+      </div>
+      <div class="text-right text-xs text-slate-600">
+        <p><strong>Data:</strong> <span id="print-date"></span></p>
+        <p><strong>Alumne / Tècnic:</strong> <span id="print-student">No especificat</span></p>
+      </div>
+    </div>
+
+    <div class="mb-5 p-3 border border-slate-300 rounded bg-slate-50">
+      <p class="text-xs uppercase font-bold text-slate-500">Escenari Seleccionat</p>
+      <p id="print-profile-title" class="text-base font-bold text-slate-900"></p>
+      <p id="print-profile-desc" class="text-xs text-slate-700 mt-1"></p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-6 mb-6 print-break-inside-avoid">
+      <div class="border border-slate-300 rounded p-4">
+        <h2 class="text-sm font-bold uppercase border-b border-slate-300 pb-1 mb-2">1. Paràmetres i Càlcul d'Alineament</h2>
+        <table class="w-full text-xs">
+          <tbody id="print-calc-table"></tbody>
+        </table>
+        <div class="mt-3 p-2 bg-slate-100 rounded text-xs">
+          <strong>Recomanació tècnica:</strong>
+          <p id="print-calc-rec" class="mt-0.5"></p>
+        </div>
+      </div>
+
+      <div class="border border-slate-300 rounded p-4">
+        <h2 class="text-sm font-bold uppercase border-b border-slate-300 pb-1 mb-2">2. Estat del Simulador Visual</h2>
+        <table class="w-full text-xs">
+          <tbody id="print-sim-table"></tbody>
+        </table>
+        <div class="mt-3 p-2 bg-slate-100 rounded text-xs">
+          <strong>Anàlisi Filtre Pinta:</strong>
+          <p id="print-comb-info" class="mt-0.5"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-4 print-break-inside-avoid">
+      <h2 class="text-sm font-bold uppercase border-b border-slate-300 pb-1">3. Captures Gràfiques de Simulació</h2>
+      <div class="grid grid-cols-3 gap-3">
+        <div class="col-span-2 border border-slate-300 rounded p-2 bg-slate-950">
+          <p class="text-[10px] text-slate-300 font-bold mb-1">Oscil·loscopi (Ones A, B i Suma)</p>
+          <img id="print-img-scope" alt="Oscil·loscopi" class="w-full h-auto" />
+        </div>
+        <div class="border border-slate-300 rounded p-2 bg-slate-950">
+          <p class="text-[10px] text-slate-300 font-bold mb-1">Diagrama Fasorial</p>
+          <img id="print-img-phasor" alt="Fasor" class="w-full h-auto" />
+        </div>
+      </div>
+      <div class="border border-slate-300 rounded p-2 bg-slate-950">
+        <p class="text-[10px] text-slate-300 font-bold mb-1">Resposta en Freqüència (Filtre Pinta)</p>
+        <img id="print-img-comb" alt="Filtre Pinta" class="w-full h-auto" />
+      </div>
+    </div>
+
+    <div class="mt-6 border border-slate-300 rounded p-4 min-h-[80px]">
+      <p class="text-xs font-bold uppercase text-slate-500">Observacions de l'alumne / valoració del professorat:</p>
+    </div>
+  </div>
+
+  <!-- LÒGICA JAVASCRIPT PURA (VANILLA JS) -->
+  <script>
+    // =========================================================================
+    // 1. EMMAGATZEMATGE SEGUR (COMPATIBLE AMB IFRAMES RESTRICTIUS DE GOOGLE SITES)
+    // =========================================================================
+    const memoryStorage = {};
+    function safeStorageGet(key) {
+      try {
+        return window.localStorage.getItem(key);
+      } catch (e) {
+        return memoryStorage[key] || null;
+      }
+    }
+    function safeStorageSet(key, val) {
+      memoryStorage[key] = val;
+      try {
+        window.localStorage.setItem(key, val);
+      } catch (e) {
+        // Fallback silenciós en iframes sandboxed
+      }
+    }
+    function safeStorageRemove(key) {
+      delete memoryStorage[key];
+      try {
+        window.localStorage.removeItem(key);
+      } catch (e) {
+        // Fallback silenciós
+      }
+    }
+
+    // =========================================================================
+    // 2. DEFINICIÓ DELS 4 PERFILS / ESCENARIS EDUCATIUS
+    // =========================================================================
+    const PROFILES = {
+      megafonia: {
+        id: 'megafonia',
+        name: 'Megafonia distribuïda (Passadís / Nau)',
+        focus: 'Focus: Intel·ligibilitat (STI) i retard per zones',
+        desc: 'Instal·lació amb múltiples altaveus de sostre o projectors acústics al llarg d’un passadís o nau industrial. Quan un oient rep el so de dos altaveus a diferents distàncies sense alinear, es produeix filtre pinta i pèrdua d’intel·ligibilitat en la veu.',
+        tip: 'En veu (500 Hz – 2 kHz), un retard de 0,5 a 2 ms provoca cancel·lacions severes. Aplica retard DSP als altaveus secundaris respecte al principal o espaia els punts acústics perquè l’atenuació per distància minimitzi el solapament.',
+        labelD1: 'Distància Altaveu A (principal) a l’oient (m)',
+        labelD2: 'Distància Altaveu B (secundari) a l’oient (m)',
+        defaults: { freq: 1000, temp: 20, d1: 3.00, d2: 3.34, pol: false, simLevelB: -3 }
+      },
+      subtop: {
+        id: 'subtop',
+        name: 'Concert en directe (Alineament Sub + Top)',
+        focus: 'Focus: Suma constructiva al punt d’encreuament (Crossover)',
+        desc: 'Sistema de PA amb caixes de greus (Subwoofer) i recintes mitjans/aguts (Top). A la freqüència de tall (80–120 Hz), ambdues vies reprodueixen el mateix senyal. Si no estan en fase, perdem fins a 12 dB d’impacte i apareix un "forat" als greus.',
+        tip: 'Comprova sempre l’alineament a la freqüència de crossover (ex. 100 Hz). Amb 1,72 m de diferència física a 100 Hz tens un desfasament de 180° (cancel·lació total!). Pots alinear amb delay DSP o comprovar si la inversió de polaritat millora la suma.',
+        labelD1: 'Distància del Top al punt de mesura (m)',
+        labelD2: 'Distància del Subwoofer al punt de mesura (m)',
+        defaults: { freq: 100, temp: 20, d1: 5.00, d2: 6.72, pol: false, simLevelB: 0 }
+      },
+      micros: {
+        id: 'micros',
+        name: 'Microfonia dual / Escenari (Regla 3:1)',
+        focus: 'Focus: Evitar filtre pinta per diafonia (Bleed)',
+        desc: 'Dos micròfons captant fonts properes (p. ex. dos ponents en un faristol, cor, o caixa/hit-hat). El micròfon B capta la veu de A amb retard acústic, generant un so "buit" o metàl·lic (filtre pinta) en sumar-los al mesclador.',
+        tip: 'Aplica la Regla 3:1: la distància fins al segon camí acústic (d2) ha de ser com a mínim 3 vegades la distància font-micròfon principal (d1). Així aconseguiràs ≥9,5 dB de diferència de nivell i el filtre pinta serà inaudible.',
+        labelD1: 'Distància Font Principal al Micro A (m)',
+        labelD2: 'Distància Font Principal al Micro B (m)',
+        defaults: { freq: 500, temp: 21, d1: 0.25, d2: 0.60, pol: false, simLevelB: -4 }
+      },
+      delay: {
+        id: 'delay',
+        name: 'Sala polivalent (Torres de retard / Efecte Haas)',
+        focus: 'Focus: Precedència acústica i reforç coherent',
+        desc: 'Auditori o espai llarg amb PA principal a l’escenari i una línia d’altaveus de retard (Delay) a mitja sala. Cal retardar electrònicament la torre de delay perquè el so coincideixi amb l’ona que viatja per l’aire des de l’escenari.',
+        tip: 'Calcula el retard físic (Δd / c) i afegeix-hi entre +10 ms i +15 ms (Efecte Haas). D’aquesta manera l’espectador percep que tot el so prové naturalment de l’escenari tot i rebre reforç proper.',
+        labelD1: 'Distància PA Principal a la zona de delay (m)',
+        labelD2: 'Distància Torre Delay a l’oient (m)',
+        defaults: { freq: 400, temp: 20, d1: 14.00, d2: 4.00, pol: false, simLevelB: 0 }
+      }
+    };
+
+    // =========================================================================
+    // 3. ESTAT GLOBAL DE L'APLICACIÓ
+    // =========================================================================
+    let state = {
+      profileId: 'subtop',
+      calc: {
+        freq: 100,
+        temp: 20,
+        d1: 5.0,
+        d2: 6.72,
+        pol: false,
+        speed: 343.42,
+        lambda: 3.434,
+        deltaD: 1.72,
+        deltaT: 5.01,
+        phaseDeg: 180,
+        gainDb: -90,
+        dspDelayMs: 5.01,
+        dspTarget: 'A'
+      },
+      sim: {
+        delayMs: 5.01,
+        freq: 100,
+        levelBDb: 0,
+        polB: false,
+        muteA: false,
+        muteB: false,
+        phaseDeg: 180,
+        gainDb: -90,
+        firstNotches: []
+      },
+      chatHistory: []
+    };
+
+    // Web Audio API (opcional)
+    let audioCtx = null;
+    let audioEnabled = false;
+    let oscA = null, oscB = null, gainNodeA = null, gainNodeB = null, delayNodeB = null, invertGainB = null;
+
+    // =========================================================================
+    // 4. FUNCIONS DE CÀLCUL ACÚSTIC
+    // =========================================================================
+    function calcSpeedOfSound(tempC) {
+      return 331.3 + 0.606 * tempC;
+    }
+
+    function normalizeAngle360(deg) {
+      let a = deg % 360;
+      if (a < 0) a += 360;
+      return a;
+    }
+
+    function computeWaveSumDb(freqHz, delayMs, levelBDb, polB, muteA, muteB) {
+      const ampA = muteA ? 0 : 1;
+      const ampB = muteB ? 0 : Math.pow(10, levelBDb / 20);
+      const omegaT = 2 * Math.PI * freqHz * (delayMs / 1000);
+      const theta = omegaT + (polB ? Math.PI : 0);
+      const resultant = Math.sqrt(ampA * ampA + ampB * ampB + 2 * ampA * ampB * Math.cos(theta));
+      const db = resultant <= 1e-4 ? -80 : 20 * Math.log10(resultant);
+      const phaseDeg = normalizeAngle360((theta * 180) / Math.PI);
+      return { resultant, db, phaseDeg };
+    }
+
+    // =========================================================================
+    // 5. GESTIÓ DE PERFILS
+    // =========================================================================
+    function selectProfile(profileId, applyDefaults = true) {
+      if (!PROFILES[profileId]) return;
+      state.profileId = profileId;
+      const p = PROFILES[profileId];
+
+      document.getElementById('profile-selector').value = profileId;
+      document.getElementById('profile-title').textContent = p.name;
+      document.getElementById('profile-focus').textContent = p.focus;
+      document.getElementById('profile-desc').textContent = p.desc;
+      document.getElementById('profile-tip').textContent = p.tip;
+      document.getElementById('label-d1').textContent = p.labelD1;
+      document.getElementById('label-d2').textContent = p.labelD2;
+
+      if (applyDefaults) {
+        resetProfileDefaults();
+      } else {
+        updateCalculator();
+      }
+      updateGeminiContextPreview();
+    }
+
+    function resetProfileDefaults() {
+      const p = PROFILES[state.profileId];
+      document.getElementById('calc-freq').value = p.defaults.freq;
+      document.getElementById('calc-temp').value = p.defaults.temp;
+      document.getElementById('calc-d1').value = p.defaults.d1.toFixed(2);
+      document.getElementById('calc-d2').value = p.defaults.d2.toFixed(2);
+      document.getElementById('calc-polarity').checked = p.defaults.pol;
+
+      updateCalculator();
+      // També sincronitzem el simulador amb els valors per defecte del perfil
+      state.sim.levelBDb = p.defaults.simLevelB;
+      document.getElementById('sim-levelb').value = p.defaults.simLevelB;
+      syncCalcToSim();
+    }
+
+    function setCalcFreq(f) {
+      document.getElementById('calc-freq').value = f;
+      updateCalculator();
+    }
+
+    // =========================================================================
+    // 6. ACTUALITZACIÓ DEL CONFIGURADOR (MÒDUL 2)
+    // =========================================================================
+    function updateCalculator() {
+      const freq = Math.max(20, Math.min(20000, parseFloat(document.getElementById('calc-freq').value) || 100));
+      const temp = Math.max(-10, Math.min(50, parseFloat(document.getElementById('calc-temp').value) || 20));
+      const d1 = Math.max(0.01, parseFloat(document.getElementById('calc-d1').value) || 1);
+      const d2 = Math.max(0.01, parseFloat(document.getElementById('calc-d2').value) || 1);
+      const pol = document.getElementById('calc-polarity').checked;
+
+      const c = calcSpeedOfSound(temp);
+      const lambda = c / freq;
+      const deltaD = Math.abs(d2 - d1);
+      const deltaT = (deltaD / c) * 1000; // ms
+
+      const sum = computeWaveSumDb(freq, deltaT, 0, pol, false, false);
+      const phaseDeg = sum.phaseDeg;
+      const signedPhase = phaseDeg > 180 ? phaseDeg - 360 : phaseDeg;
+
+      state.calc = {
+        freq, temp, d1, d2, pol,
+        speed: c,
+        lambda,
+        deltaD,
+        deltaT,
+        phaseDeg,
+        gainDb: sum.db,
+        dspDelayMs: deltaT,
+        dspTarget: d1 < d2 ? 'Font A' : (d2 < d1 ? 'Font B' : 'Cap (ja alineat)')
+      };
+
+      // Actualitzar DOM
+      document.getElementById('res-speed').textContent = c.toFixed(1) + ' m/s';
+      document.getElementById('res-lambda').textContent = lambda >= 1 ? lambda.toFixed(2) + ' m' : (lambda * 100).toFixed(1) + ' cm';
+      document.getElementById('res-deltad').textContent = deltaD.toFixed(2) + ' m';
+      document.getElementById('res-deltat').textContent = deltaT.toFixed(2) + ' ms';
+      document.getElementById('res-phase').textContent = Math.round(phaseDeg) + '° (' + (signedPhase >= 0 ? '+' : '') + Math.round(signedPhase) + '°)';
+
+      const gainEl = document.getElementById('res-gain');
+      if (sum.db <= -40) {
+        gainEl.textContent = '-∞ dB';
+      } else {
+        gainEl.textContent = (sum.db >= 0 ? '+' : '') + sum.db.toFixed(2) + ' dB';
+      }
+
+      // Diagnòstic i colors
+      const badge = document.getElementById('calc-status-badge');
+      const box = document.getElementById('calc-diagnosis-box');
+      const rec = document.getElementById('calc-recommendation');
+      const pCheck = document.getElementById('calc-profile-check');
+
+      if (sum.db >= 3.0) {
+        badge.textContent = 'Suma Constructiva';
+        badge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+        box.className = 'p-4 rounded-xl border transition-colors bg-emerald-950/20 border-emerald-500/30 space-y-2';
+        gainEl.className = 'text-base font-mono font-bold text-emerald-400';
+      } else if (sum.db >= -3.0) {
+        badge.textContent = 'Suma Parcial / Transició';
+        badge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40';
+        box.className = 'p-4 rounded-xl border transition-colors bg-amber-950/20 border-amber-500/30 space-y-2';
+        gainEl.className = 'text-base font-mono font-bold text-amber-300';
+      } else {
+        badge.textContent = 'Cancel·lació Destructiva!';
+        badge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40';
+        box.className = 'p-4 rounded-xl border transition-colors bg-rose-950/25 border-rose-500/40 space-y-2';
+        gainEl.className = 'text-base font-mono font-bold text-rose-400';
+      }
+
+      if (deltaD < 0.01 && !pol) {
+        rec.innerHTML = 'Les dues fonts estan <strong>equidistants i en fase</strong>. No cal aplicar retard electrònic (0,00 ms).';
+      } else if (deltaD < 0.01 && pol) {
+        rec.innerHTML = 'Les dues fonts són equidistants però tenen la <strong>polaritat invertida ($\varnothing$ 180°)</strong>. Desactiva l’inversor de polaritat per recuperar els +6 dB.';
+      } else {
+        const closer = d1 < d2 ? 'Font A' : 'Font B';
+        const further = d1 < d2 ? 'Font B' : 'Font A';
+        rec.innerHTML = `La <strong>${closer}</strong> arriba <strong>${deltaT.toFixed(2)} ms</strong> abans que la ${further}. Per alinear-les temporalment al DSP, aplica <strong>${deltaT.toFixed(2)} ms</strong> de retard a la <strong>${closer}</strong>${pol ? ' i corregeix la inversió de polaritat.' : '.'}`;
+      }
+
+      // Comprovació específica per perfil
+      if (state.profileId === 'micros') {
+        const ratio = Math.max(d1, d2) / Math.min(d1, d2);
+        if (ratio >= 3) {
+          pCheck.textContent = `✓ Regla 3:1 COMPLERTA (ràtio ${ratio.toFixed(2)}:1 ≥ 3:1). El filtre pinta serà mínim.`;
+          pCheck.className = 'text-xs text-emerald-400 font-medium pt-1 border-t border-console-800';
+        } else {
+          const minNeeded = (Math.min(d1, d2) * 3).toFixed(2);
+          pCheck.textContent = `⚠ Regla 3:1 INCOMPLERTA (ràtio ${ratio.toFixed(2)}:1 < 3:1). Separa el segon micròfon almenys a ${minNeeded} m!`;
+          pCheck.className = 'text-xs text-rose-400 font-medium pt-1 border-t border-console-800';
+        }
+      } else if (state.profileId === 'delay') {
+        const haasMin = (deltaT + 10).toFixed(2);
+        const haasMax = (deltaT + 15).toFixed(2);
+        pCheck.textContent = `Recomanació Haas per a Torre Delay: suma +10..15 ms → retard total DSP recomanat entre ${haasMin} ms i ${haasMax} ms.`;
+        pCheck.className = 'text-xs text-cyan-300 font-medium pt-1 border-t border-console-800';
+      } else if (state.profileId === 'subtop') {
+        pCheck.textContent = `A ${freq} Hz (λ = ${lambda.toFixed(2)} m), cada ${(lambda / 2).toFixed(2)} m de diferència implica un gir de 180° (cancel·lació al crossover).`;
+        pCheck.className = 'text-xs text-cyan-300 font-medium pt-1 border-t border-console-800';
+      } else {
+        const firstNotch = deltaT > 0.01 ? (pol ? 1000 / deltaT : 500 / deltaT) : 0;
+        pCheck.textContent = deltaT > 0.01
+          ? `Aquesta diferència genera la primera cancel·lació de filtre pinta a ${firstNotch.toFixed(0)} Hz (afecta la claredat vocal).`
+          : 'Sense diferència de camí: no hi ha filtre pinta en aquest punt exacte.';
+        pCheck.className = 'text-xs text-cyan-300 font-medium pt-1 border-t border-console-800';
+      }
+
+      updateGeminiContextPreview();
+    }
+
+    function syncCalcToSim() {
+      const clampedDelay = Math.min(15, Math.max(0, state.calc.deltaT));
+      const clampedFreq = Math.min(2000, Math.max(40, state.calc.freq));
+
+      document.getElementById('sim-delay').value = clampedDelay.toFixed(2);
+      document.getElementById('sim-freq').value = Math.round(clampedFreq);
+      state.sim.polB = state.calc.pol;
+      updatePolarityButtonUI();
+      updateSimulator();
+    }
+
+    // =========================================================================
+    // 7. ACTUALITZACIÓ DEL SIMULADOR VISUAL (MÒDUL 3)
+    // =========================================================================
+    function setSimPhasePreset(targetDeg) {
+      const freq = parseFloat(document.getElementById('sim-freq').value) || 250;
+      const periodMs = 1000 / freq;
+      let neededDelay = (targetDeg / 360) * periodMs;
+      // Si la polaritat està invertida, ajustem visualment
+      if (state.sim.polB) {
+        neededDelay = (normalizeAngle360(targetDeg - 180) / 360) * periodMs;
+      }
+      if (neededDelay > 15) {
+        // Si el període és molt llarg (baixa freqüència), limitem a 15 ms i avisem
+        neededDelay = 15;
+      }
+      document.getElementById('sim-delay').value = neededDelay.toFixed(2);
+      updateSimulator();
+    }
+
+    function toggleMute(channel) {
+      if (channel === 'A') {
+        state.sim.muteA = !state.sim.muteA;
+        const btn = document.getElementById('btn-mute-a');
+        btn.textContent = state.sim.muteA ? 'FONT A: MUTE' : 'FONT A: ON';
+        btn.className = state.sim.muteA
+          ? 'py-2 px-2 rounded-lg text-xs font-bold border border-rose-500/40 bg-rose-500/20 text-rose-300 transition'
+          : 'py-2 px-2 rounded-lg text-xs font-bold border border-cyan-500/40 bg-cyan-500/15 text-cyan-300 transition';
+      } else {
+        state.sim.muteB = !state.sim.muteB;
+        const btn = document.getElementById('btn-mute-b');
+        btn.textContent = state.sim.muteB ? 'FONT B: MUTE' : 'FONT B: ON';
+        btn.className = state.sim.muteB
+          ? 'py-2 px-2 rounded-lg text-xs font-bold border border-rose-500/40 bg-rose-500/20 text-rose-300 transition'
+          : 'py-2 px-2 rounded-lg text-xs font-bold border border-amber-500/40 bg-amber-500/15 text-amber-300 transition';
+      }
+      updateSimulator();
+    }
+
+    function toggleSimPolarity() {
+      state.sim.polB = !state.sim.polB;
+      updatePolarityButtonUI();
+      updateSimulator();
+    }
+
+    function updatePolarityButtonUI() {
+      const btn = document.getElementById('btn-pol-b');
+      if (state.sim.polB) {
+        btn.innerHTML = '&varnothing; B: 180°';
+        btn.className = 'py-2 px-2 rounded-lg text-xs font-bold border border-rose-500/60 bg-rose-500/25 text-rose-200 transition';
+      } else {
+        btn.innerHTML = '&varnothing; B: 0°';
+        btn.className = 'py-2 px-2 rounded-lg text-xs font-bold border border-console-600 bg-console-800 text-slate-300 transition';
+      }
+    }
+
+    function updateSimulator() {
+      const delayMs = parseFloat(document.getElementById('sim-delay').value) || 0;
+      const freq = parseFloat(document.getElementById('sim-freq').value) || 250;
+      const levelBDb = parseFloat(document.getElementById('sim-levelb').value) || 0;
+
+      const periodMs = 1000 / freq;
+      const sum = computeWaveSumDb(freq, delayMs, levelBDb, state.sim.polB, state.sim.muteA, state.sim.muteB);
+
+      state.sim.delayMs = delayMs;
+      state.sim.freq = freq;
+      state.sim.levelBDb = levelBDb;
+      state.sim.phaseDeg = sum.phaseDeg;
+      state.sim.gainDb = sum.db;
+
+      // Etiquetes UI
+      document.getElementById('sim-delay-val').textContent = delayMs.toFixed(2) + ' ms';
+      document.getElementById('sim-freq-val').textContent = Math.round(freq) + ' Hz';
+      document.getElementById('sim-period-val').textContent = periodMs.toFixed(2) + ' ms';
+      document.getElementById('sim-levelb-val').textContent = (levelBDb > 0 ? '+' : '') + levelBDb.toFixed(1) + ' dB';
+      document.getElementById('sim-curr-freq-label').textContent = Math.round(freq) + ' Hz';
+      document.getElementById('sim-curr-phase').textContent = Math.round(sum.phaseDeg) + '°';
+
+      const gainBadge = document.getElementById('sim-gain-badge');
+      const led = document.getElementById('sim-led');
+      const meterBar = document.getElementById('sim-meter-bar');
+      const legendSum = document.getElementById('legend-sum');
+
+      const dbText = sum.db <= -40 ? '-∞ dB' : (sum.db >= 0 ? '+' : '') + sum.db.toFixed(2) + ' dB';
+      gainBadge.textContent = dbText;
+
+      // Escala vúmetre: -24 dB (0%) a +6 dB (100%)
+      const meterPct = Math.max(0, Math.min(100, ((sum.db + 24) / 30) * 100));
+      meterBar.style.width = meterPct + '%';
+
+      if (sum.db >= 3.0) {
+        gainBadge.className = 'px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+        led.className = 'w-3 h-3 rounded-full bg-emerald-400 led-emerald';
+        legendSum.className = 'text-emerald-400 font-bold';
+      } else if (sum.db >= -3.0) {
+        gainBadge.className = 'px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        led.className = 'w-3 h-3 rounded-full bg-amber-400 led-amber';
+        legendSum.className = 'text-amber-300 font-bold';
+      } else {
+        gainBadge.className = 'px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30';
+        led.className = 'w-3 h-3 rounded-full bg-rose-500 led-red';
+        legendSum.className = 'text-rose-400 font-bold';
+      }
+
+      // Calcular primeres cancel·lacions del filtre pinta
+      const notches = [];
+      if (delayMs > 0.02 && !state.sim.muteA && !state.sim.muteB) {
+        const dtSec = delayMs / 1000;
+        for (let k = 0; k < 4; k++) {
+          const fNotch = state.sim.polB ? (k + 1) / dtSec : (2 * k + 1) / (2 * dtSec);
+          if (fNotch <= 4000) notches.push(Math.round(fNotch));
+        }
+      }
+      state.sim.firstNotches = notches;
+
+      const combInfo = document.getElementById('comb-notches-info');
+      if (state.sim.muteA || state.sim.muteB) {
+        combInfo.textContent = 'Només una font activa: sense interferència de filtre pinta';
+        combInfo.className = 'text-[11px] font-mono text-slate-400';
+      } else if (delayMs <= 0.02) {
+        combInfo.textContent = state.sim.polB
+          ? 'Cancel·lació total en totes les freqüències (polaritat invertida amb 0 ms)'
+          : 'Sense retard (Δt = 0 ms): resposta totalment plana (+6 dB)';
+        combInfo.className = state.sim.polB ? 'text-[11px] font-mono text-rose-400' : 'text-[11px] font-mono text-emerald-400';
+      } else if (notches.length > 0) {
+        combInfo.textContent = 'Valls de cancel·lació (notches): ' + notches.map(n => n + ' Hz').join(', ');
+        combInfo.className = 'text-[11px] font-mono text-rose-300';
+      } else {
+        combInfo.textContent = 'Primera cancel·lació per sobre de 4.000 Hz';
+        combInfo.className = 'text-[11px] font-mono text-amber-300';
+      }
+
+      drawScope();
+      drawPhasor();
+      drawCombFilter();
+      updateWebAudioParams();
+      updateGeminiContextPreview();
+    }
+
+    // =========================================================================
+    // 8. DIBUIX DELS 3 GRÀFICS EN CANVAS (HIDPI RESPONSIVE)
+    // =========================================================================
+    function prepCanvas(canvas) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(100, rect.width);
+      const h = Math.max(80, rect.height);
+      if (canvas.width !== Math.floor(w * dpr) || canvas.height !== Math.floor(h * dpr)) {
+        canvas.width = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
+      }
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { ctx, w, h };
+    }
+
+    function drawScope() {
+      const canvas = document.getElementById('canvas-scope');
+      const { ctx, w, h } = prepCanvas(canvas);
+      const midY = h / 2;
+      const ampScale = (h * 0.42) / 2; // Permet amplitud suma = 2 sense retallar
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Graella
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, midY);
+      ctx.lineTo(w, midY);
+      for (let i = 1; i < 4; i++) {
+        const x = (w / 4) * i;
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+      }
+      ctx.stroke();
+
+      const ampA = state.sim.muteA ? 0 : 1;
+      const ampB = state.sim.muteB ? 0 : Math.pow(10, state.sim.levelBDb / 20);
+      const phaseRad = (state.sim.phaseDeg * Math.PI) / 180;
+      const cycles = 2.5; // Mostrem 2.5 cicles de la freqüència actual
+
+      // Ona A (Cian discontínua)
+      if (!state.sim.muteA) {
+        ctx.save();
+        ctx.strokeStyle = '#22d3ee';
+        ctx.lineWidth = 1.6;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        for (let x = 0; x <= w; x++) {
+          const angle = (x / w) * cycles * 2 * Math.PI;
+          const y = midY - Math.sin(angle) * ampA * ampScale;
+          if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Ona B (Ambre discontínua)
+      if (!state.sim.muteB) {
+        ctx.save();
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 1.6;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        for (let x = 0; x <= w; x++) {
+          const angle = (x / w) * cycles * 2 * Math.PI - phaseRad;
+          const y = midY - Math.sin(angle) * ampB * ampScale;
+          if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Suma A + B (Sòlida brillant)
+      const sumColor = state.sim.gainDb >= 3 ? '#34d399' : (state.sim.gainDb >= -3 ? '#fbbf24' : '#f43f5e');
+      ctx.save();
+      ctx.strokeStyle = sumColor;
+      ctx.lineWidth = 2.8;
+      ctx.beginPath();
+      for (let x = 0; x <= w; x++) {
+        const angle = (x / w) * cycles * 2 * Math.PI;
+        const valA = Math.sin(angle) * ampA;
+        const valB = Math.sin(angle - phaseRad) * ampB;
+        const y = midY - (valA + valB) * ampScale;
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawPhasor() {
+      const canvas = document.getElementById('canvas-phasor');
+      const { ctx, w, h } = prepCanvas(canvas);
+      const cx = w / 2;
+      const cy = h / 2;
+      const maxR = Math.min(w, h) * 0.42;
+      const unitR = maxR / 2; // 1 unit = 50% del radi perquè suma=2 càpiga dins el cercle exterior
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Cercles de referència (+0 dB i +6 dB)
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, unitR, 0, 2 * Math.PI);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#334155';
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.arc(cx, cy, maxR, 0, 2 * Math.PI);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Eixos
+      ctx.strokeStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.moveTo(cx - maxR - 6, cy); ctx.lineTo(cx + maxR + 6, cy);
+      ctx.moveTo(cx, cy - maxR - 6); ctx.lineTo(cx, cy + maxR + 6);
+      ctx.stroke();
+
+      const ampA = state.sim.muteA ? 0 : 1;
+      const ampB = state.sim.muteB ? 0 : Math.pow(10, state.sim.levelBDb / 20);
+      const phaseRad = (state.sim.phaseDeg * Math.PI) / 180;
+
+      const ax = ampA * unitR;
+      const ay = 0;
+      const bx = ampB * unitR * Math.cos(-phaseRad);
+      const by = ampB * unitR * Math.sin(-phaseRad);
+      const rx = ax + bx;
+      const ry = ay + by;
+
+      function drawVec(dx, dy, color, width, label) {
+        if (Math.hypot(dx, dy) < 2) return;
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + dx, cy + dy);
+        ctx.stroke();
+
+        // Punta de fletxa
+        const ang = Math.atan2(dy, dx);
+        ctx.beginPath();
+        ctx.moveTo(cx + dx, cy + dy);
+        ctx.lineTo(cx + dx - 7 * Math.cos(ang - 0.4), cy + dy - 7 * Math.sin(ang - 0.4));
+        ctx.lineTo(cx + dx - 7 * Math.cos(ang + 0.4), cy + dy - 7 * Math.sin(ang + 0.4));
+        ctx.closePath();
+        ctx.fill();
+
+        if (label) {
+          ctx.font = 'bold 10px monospace';
+          ctx.fillText(label, cx + dx * 0.75 + 4, cy + dy * 0.75 - 4);
+        }
+        ctx.restore();
+      }
+
+      drawVec(ax, ay, '#22d3ee', 2, 'A');
+      drawVec(bx, by, '#fbbf24', 2, 'B');
+      const sumColor = state.sim.gainDb >= 3 ? '#34d399' : (state.sim.gainDb >= -3 ? '#fbbf24' : '#f43f5e');
+      drawVec(rx, ry, sumColor, 3, 'A+B');
+    }
+
+    function drawCombFilter() {
+      const canvas = document.getElementById('canvas-comb');
+      const { ctx, w, h } = prepCanvas(canvas);
+      const padL = 36, padR = 14, padT = 12, padB = 22;
+      const plotW = w - padL - padR;
+      const plotH = h - padT - padB;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const minF = 20, maxF = 4000;
+      const minDb = -24, maxDb = 8;
+
+      const fToX = f => padL + (Math.log10(f / minF) / Math.log10(maxF / minF)) * plotW;
+      const dbToY = db => padT + ((maxDb - Math.max(minDb, Math.min(maxDb, db))) / (maxDb - minDb)) * plotH;
+
+      // Graella dB
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      [6, 0, -6, -12, -18, -24].forEach(db => {
+        const y = dbToY(db);
+        ctx.strokeStyle = db === 0 ? '#475569' : '#1e293b';
+        ctx.lineWidth = db === 0 ? 1.2 : 1;
+        ctx.beginPath();
+        ctx.moveTo(padL, y);
+        ctx.lineTo(w - padR, y);
+        ctx.stroke();
+        ctx.fillStyle = db === 6 ? '#34d399' : '#64748b';
+        ctx.fillText((db > 0 ? '+' : '') + db, padL - 5, y);
+      });
+
+      // Graella freqüències logarítmica
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      [20, 50, 100, 250, 500, 1000, 2000, 4000].forEach(f => {
+        const x = fToX(f);
+        ctx.strokeStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.moveTo(x, padT);
+        ctx.lineTo(x, padT + plotH);
+        ctx.stroke();
+        ctx.fillStyle = '#64748b';
+        ctx.fillText(f >= 1000 ? (f / 1000) + 'k' : f, x, padT + plotH + 5);
+      });
+
+      // Línia vertical de la freqüència de prova actual
+      const currX = fToX(Math.max(minF, Math.min(maxF, state.sim.freq)));
+      ctx.strokeStyle = 'rgba(34, 211, 238, 0.55)';
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(currX, padT);
+      ctx.lineTo(currX, padT + plotH);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Corba de resposta en freqüència
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      const steps = Math.max(200, Math.floor(plotW));
+      for (let i = 0; i <= steps; i++) {
+        const ratio = i / steps;
+        const f = minF * Math.pow(maxF / minF, ratio);
+        const res = computeWaveSumDb(f, state.sim.delayMs, state.sim.levelBDb, state.sim.polB, state.sim.muteA, state.sim.muteB);
+        const x = padL + ratio * plotW;
+        const y = dbToY(res.db);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // Punt actual a la corba
+      const currY = dbToY(state.sim.gainDb);
+      ctx.fillStyle = state.sim.gainDb >= 3 ? '#34d399' : (state.sim.gainDb >= -3 ? '#fbbf24' : '#f43f5e');
+      ctx.beginPath();
+      ctx.arc(currX, currY, 4.5, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+
+    // =========================================================================
+    // 9. WEB AUDIO API OPCIONAL (ESCOLTA SEGURA A BAIX VOLUM)
+    // =========================================================================
+    function toggleAudioMonitor() {
+      const btn = document.getElementById('audio-toggle-btn');
+      const label = document.getElementById('audio-toggle-label');
+      if (!audioEnabled) {
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!audioCtx) {
+            alert('El teu navegador no suporta Web Audio API.');
+            return;
+          }
+          audioCtx = new AudioCtx();
+          oscA = audioCtx.createOscillator();
+          oscB = audioCtx.createOscillator();
+          gainNodeA = audioCtx.createGain();
+          gainNodeB = audioCtx.createGain();
+          invertGainB = audioCtx.createGain();
+          delayNodeB = audioCtx.createDelay(0.1);
+          const masterGain = audioCtx.createGain();
+          masterGain.gain.value = 0.05; // Volum segur (-26 dB)
+
+          oscA.type = 'sine';
+          oscB.type = 'sine';
+
+          oscA.connect(gainNodeA).connect(masterGain);
+          oscB.connect(delayNodeB).connect(invertGainB).connect(gainNodeB).connect(masterGain);
+          masterGain.connect(audioCtx.destination);
+
+          oscA.start();
+          oscB.start();
+          audioEnabled = true;
+          updateWebAudioParams();
+
+          label.textContent = 'To Actiu (Clica per silenciar)';
+          btn.className = 'px-3 py-1.5 rounded-lg bg-cyan-600/30 border border-cyan-400 text-xs font-semibold text-cyan-200 flex items-center gap-1.5 transition';
+        } catch (e) {
+          alert('No s’ha pogut iniciar l’àudio: ' + e.message);
+        }
+      } else {
+        stopAudioMonitor();
+      }
+    }
+
+    function stopAudioMonitor() {
+      if (audioCtx) {
+        try { audioCtx.close(); } catch (e) {}
+        audioCtx = null;
+      }
+      audioEnabled = false;
+      document.getElementById('audio-toggle-label').textContent = 'Escolta el to (Silenciat)';
+      document.getElementById('audio-toggle-btn').className = 'px-3 py-1.5 rounded-lg bg-console-700 hover:bg-console-600 border border-console-600 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition';
+    }
+
+    function updateWebAudioParams() {
+      if (!audioEnabled || !audioCtx) return;
+      const now = audioCtx.currentTime;
+      oscA.frequency.setTargetAtTime(state.sim.freq, now, 0.02);
+      oscB.frequency.setTargetAtTime(state.sim.freq, now, 0.02);
+      gainNodeA.gain.setTargetAtTime(state.sim.muteA ? 0 : 1, now, 0.02);
+      const ampB = state.sim.muteB ? 0 : Math.pow(10, state.sim.levelBDb / 20);
+      gainNodeB.gain.setTargetAtTime(ampB, now, 0.02);
+      delayNodeB.delayTime.setTargetAtTime(state.sim.delayMs / 1000, now, 0.02);
+      invertGainB.gain.setTargetAtTime(state.sim.polB ? -1 : 1, now, 0.01);
+    }
+
+    // =========================================================================
+    // 10. TUTOR IA INTEGRAT AMB GEMINI (MODEL SEGUR BYOK)
+    // =========================================================================
+    const LS_KEY_NAME = 'fasilab_gemini_api_key';
+
+    function initApiKeyUI() {
+      const saved = safeStorageGet(LS_KEY_NAME);
+      const input = document.getElementById('gemini-api-key');
+      const status = document.getElementById('gemini-key-status');
+      const dot = document.getElementById('gemini-key-dot');
+
+      if (saved && saved.trim().length > 10) {
+        input.value = saved;
+        status.textContent = '✓ Clau API desada localment al navegador (localStorage). Llista per consultar Gemini.';
+        status.className = 'text-[11px] text-emerald-400';
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+      } else {
+        input.value = '';
+        status.textContent = '⚠ Encara no has desat cap API Key. Introdueix la teva clau de Google AI Studio per activar la IA.';
+        status.className = 'text-[11px] text-amber-400';
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+      }
+    }
+
+    function saveApiKey() {
+      const val = document.getElementById('gemini-api-key').value.trim();
+      if (!val) {
+        alert('Introdueix una clau API vàlida abans de desar.');
+        return;
+      }
+      safeStorageSet(LS_KEY_NAME, val);
+      initApiKeyUI();
+    }
+
+    function clearApiKey() {
+      safeStorageRemove(LS_KEY_NAME);
+      initApiKeyUI();
+    }
+
+    function openGeminiModal() {
+      document.getElementById('gemini-modal').classList.remove('hidden');
+      initApiKeyUI();
+      updateGeminiContextPreview();
+    }
+
+    function closeGeminiModal() {
+      document.getElementById('gemini-modal').classList.add('hidden');
+    }
+
+    function updateGeminiContextPreview() {
+      const el = document.getElementById('gemini-context-preview');
+      if (!el) return;
+      const p = PROFILES[state.profileId];
+      el.textContent = `${p.id.toUpperCase()} | Calc: ${state.calc.freq}Hz, Δd=${state.calc.deltaD.toFixed(2)}m (${state.calc.deltaT.toFixed(2)}ms) | Sim: ${state.sim.freq}Hz, ${state.sim.delayMs.toFixed(2)}ms, ${Math.round(state.sim.phaseDeg)}°, ${state.sim.gainDb <= -40 ? '-∞' : state.sim.gainDb.toFixed(1)}dB`;
+    }
+
+    function buildHiddenSystemContext() {
+      const p = PROFILES[state.profileId];
+      return `Ets un professor i tècnic expert en sonorització i megafonia (CFGM en Instal·lacions de megafonia i sonorització).
+Respon sempre en català clar, rigorós però didàctic, adaptat al nivell d'un estudiant de Cicle Formatiu de Grau Mitjà.
+Utilitza les dades reals actuals de l'aplicació de l'alumne per donar respostes personalitzades i pràctiques:
+
+--- CONTEXT ACTUAL DE L'ALUMNE ---
+- Escenari/Perfil seleccionat: ${p.name} (${p.focus})
+- Configurador d'Alineament:
+  * Freqüència d'anàlisi: ${state.calc.freq} Hz
+  * Temperatura ambient: ${state.calc.temp} °C (Velocitat del so c = ${state.calc.speed.toFixed(2)} m/s, λ = ${state.calc.lambda.toFixed(2)} m)
+  * Distància Font A (d1): ${state.calc.d1.toFixed(2)} m
+  * Distància Font B (d2): ${state.calc.d2.toFixed(2)} m
+  * Diferència de camí (Δd): ${state.calc.deltaD.toFixed(2)} m | Retard acústic natural (Δt): ${state.calc.deltaT.toFixed(2)} ms
+  * Inversió de polaritat Font B al configurador: ${state.calc.pol ? 'SÍ (180°)' : 'NO (0°)'}
+  * Desfasament resultant: ${Math.round(state.calc.phaseDeg)}° | Guany estimat: ${state.calc.gainDb <= -40 ? '-∞ dB (cancel·lació)' : state.calc.gainDb.toFixed(2) + ' dB'}
+
+- Simulador Visual en Temps Real:
+  * Retard aplicat: ${state.sim.delayMs.toFixed(2)} ms
+  * Freqüència de prova: ${state.sim.freq} Hz
+  * Nivell Font B respecte A: ${state.sim.levelBDb.toFixed(1)} dB
+  * Estat canals: Font A=${state.sim.muteA ? 'MUTED' : 'ON'}, Font B=${state.sim.muteB ? 'MUTED' : 'ON'}
+  * Inversor de polaritat Font B al simulador: ${state.sim.polB ? 'ACTIVAT (180°)' : 'DESACTIVAT (0°)'}
+  * Desfasament actual: ${Math.round(state.sim.phaseDeg)}° | Suma resultant: ${state.sim.gainDb <= -40 ? '-∞ dB' : state.sim.gainDb.toFixed(2) + ' dB'}
+  * Primeres freqüències de cancel·lació (Filtre Pinta <= 4 kHz): ${state.sim.firstNotches.length ? state.sim.firstNotches.join(' Hz, ') + ' Hz' : 'Cap / Nul·la'}
+----------------------------------
+
+Mantén les explicacions estructurades amb vinyetes quan convingui i evita inventar dades que contradiguin els paràmetres anteriors.`;
+    }
+
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function formatGeminiMarkdown(md) {
+      let safe = escapeHtml(md);
+      // Blocs de codi o fórmules en línia
+      safe = safe.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-console-950 text-cyan-300 font-mono text-xs">$1</code>');
+      // Negreta
+      safe = safe.replace(/\*\*([^*]+)\*\*/g, '<strong class="text-white font-semibold">$1</strong>');
+      // Cursiva
+      safe = safe.replace(/\*([^*]+)\*/g, '<em class="text-slate-200">$1</em>');
+      // Títols ###
+      safe = safe.replace(/^###\s+(.*)$/gm, '<h4 class="font-bold text-cyan-300 mt-2 mb-1">$1</h4>');
+      safe = safe.replace(/^##\s+(.*)$/gm, '<h3 class="font-bold text-cyan-200 text-base mt-2 mb-1">$1</h3>');
+      // Llistes
+      safe = safe.replace(/^\s*[-*]\s+(.*)$/gm, '<li class="ml-4 list-disc">$1</li>');
+      // Salts de línia
+      safe = safe.replace(/\n/g, '<br>');
+      return safe;
+    }
+
+    function appendChatBubble(role, text, isError = false) {
+      const log = document.getElementById('gemini-chat-log');
+      const wrapper = document.createElement('div');
+      wrapper.className = role === 'user' ? 'flex justify-end' : 'flex justify-start';
+
+      const bubble = document.createElement('div');
+      if (role === 'user') {
+        bubble.className = 'max-w-[85%] rounded-2xl rounded-tr-sm px-4 py-2.5 bg-cyan-600/25 border border-cyan-500/40 text-slate-100 text-xs sm:text-sm';
+        bubble.textContent = text;
+      } else if (isError) {
+        bubble.className = 'max-w-[92%] rounded-2xl rounded-tl-sm px-4 py-3 bg-rose-950/60 border border-rose-500/40 text-rose-200 text-xs sm:text-sm';
+        bubble.textContent = text;
+      } else {
+        bubble.className = 'max-w-[92%] rounded-2xl rounded-tl-sm px-4 py-3 bg-console-800 border border-console-700 text-slate-200 text-xs sm:text-sm leading-relaxed';
+        bubble.innerHTML = formatGeminiMarkdown(text);
+      }
+
+      wrapper.appendChild(bubble);
+      log.appendChild(wrapper);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function clearChatHistory() {
+      state.chatHistory = [];
+      const log = document.getElementById('gemini-chat-log');
+      log.innerHTML = `
+        <div class="p-3.5 rounded-xl bg-console-800/70 border border-console-700 text-slate-300 text-xs leading-relaxed">
+          Conversa reiniciada. Selecciona una acció ràpida o escriu la teva consulta sobre l'escenari actual.
+        </div>`;
+    }
+
+    function askGeminiQuick(type) {
+      let promptText = '';
+      if (type === 'explain') {
+        promptText = "Explica'm com funcionen la fase, el retard i les interaccions entre fonts en aquesta situació, totalment adaptat al meu perfil seleccionat i als valors que tinc ara mateix a la pantalla.";
+      } else if (type === 'challenge') {
+        promptText = "Genera un cas pràctic realista o repte tècnic de taller/muntatge per resoldre relacionat amb el meu perfil actual (amb dades concretes de distàncies o freqüències) i demana'm que calculi la solució abans de donar-me la resposta final.";
+      } else if (type === 'audit') {
+        promptText = "Analitza i audita els meus paràmetres actuals tant del Configurador com del Simulador Visual. Indica'm si hi ha cancel·lacions perilloses, filtre pinta greu o errors de polaritat/regla 3:1, i quins ajustos exactes faries en un processador DSP real.";
+      }
+      sendToGemini(promptText);
+    }
+
+    function handleGeminiSubmit(event) {
+      event.preventDefault();
+      const input = document.getElementById('gemini-user-input');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      sendToGemini(text);
+    }
+
+    async function sendToGemini(userPrompt) {
+      const apiKey = safeStorageGet(LS_KEY_NAME) || document.getElementById('gemini-api-key').value.trim();
+      if (!apiKey) {
+        appendChatBubble('model', 'Falta la clau API! Enganxa la teva API Key de Google AI Studio al camp superior i prem "Desa clau".', true);
+        return;
+      }
+
+      appendChatBubble('user', userPrompt);
+
+      const sendBtn = document.getElementById('gemini-send-btn');
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Pensant...';
+
+      // Indicador de càrrega al xat
+      const log = document.getElementById('gemini-chat-log');
+      const loadingDiv = document.createElement('div');
+      loadingDiv.id = 'gemini-loading-indicator';
+      loadingDiv.className = 'flex justify-start';
+      loadingDiv.innerHTML = '<div class="px-4 py-2.5 rounded-2xl bg-console-800 border border-console-700 text-xs text-cyan-300 animate-pulse">Gemini està analitzant els paràmetres acústics...</div>';
+      log.appendChild(loadingDiv);
+      log.scrollTop = log.scrollHeight;
+
+      const updatedHistory = [
+        ...state.chatHistory,
+        { role: 'user', parts: [{ text: userPrompt }] }
+      ];
+
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: buildHiddenSystemContext() }]
+            },
+            contents: updatedHistory,
+            generationConfig: {
+              temperature: 0.65,
+              maxOutputTokens: 1200
+            }
+          })
+        });
+
+        const data = await response.json();
+        const loader = document.getElementById('gemini-loading-indicator');
+        if (loader) loader.remove();
+
+        if (!response.ok) {
+          const errMsg = data?.error?.message || `Error HTTP ${response.status}`;
+          appendChatBubble('model', `Error de connexió amb Gemini: ${errMsg}`, true);
+        } else {
+          const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!replyText) {
+            appendChatBubble('model', 'Gemini no ha retornat cap text (possible filtre de seguretat o resposta buida).', true);
+          } else {
+            state.chatHistory = [
+              ...updatedHistory,
+              { role: 'model', parts: [{ text: replyText }] }
+            ];
+            appendChatBubble('model', replyText);
+          }
+        }
+      } catch (err) {
+        const loader = document.getElementById('gemini-loading-indicator');
+        if (loader) loader.remove();
+        appendChatBubble('model', 'Error de xarxa en connectar amb Google Gemini: ' + err.message, true);
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Envia';
+      }
+    }
+
+    // =========================================================================
+    // 11. EXPORTACIÓ D'INFORME (IMPRIMEIX / DESA PDF)
+    // =========================================================================
+    function printReport() {
+      const p = PROFILES[state.profileId];
+      const student = document.getElementById('student-name').value.trim() || 'No especificat';
+      const nowStr = new Date().toLocaleString('ca-ES', { dateStyle: 'medium', timeStyle: 'short' });
+
+      document.getElementById('print-date').textContent = nowStr;
+      document.getElementById('print-student').textContent = student;
+      document.getElementById('print-profile-title').textContent = p.name;
+      document.getElementById('print-profile-desc').textContent = p.desc;
+
+      // Taula Configurador
+      const calcRows = [
+        ['Freqüència d’anàlisi', `${state.calc.freq} Hz`],
+        ['Temperatura ambient', `${state.calc.temp} °C (c = ${state.calc.speed.toFixed(1)} m/s)`],
+        ['Longitud d’ona (λ)', `${state.calc.lambda.toFixed(2)} m`],
+        ['Distància Font A (d1)', `${state.calc.d1.toFixed(2)} m`],
+        ['Distància Font B (d2)', `${state.calc.d2.toFixed(2)} m`],
+        ['Diferència de camí (Δd)', `${state.calc.deltaD.toFixed(2)} m`],
+        ['Retard acústic (Δt)', `${state.calc.deltaT.toFixed(2)} ms`],
+        ['Inversió polaritat B', state.calc.pol ? 'Activada (180°)' : 'Desactivada (0°)'],
+        ['Desfasament resultant', `${Math.round(state.calc.phaseDeg)}°`],
+        ['Guany de suma estimat', state.calc.gainDb <= -40 ? '-∞ dB (Cancel·lació)' : `${state.calc.gainDb.toFixed(2)} dB`]
+      ];
+      document.getElementById('print-calc-table').innerHTML = calcRows
+        .map(([k, v]) => `<tr class="border-b border-slate-200"><td class="py-1 text-slate-600">${k}</td><td class="py-1 font-mono font-bold text-right">${v}</td></tr>`)
+        .join('');
+      document.getElementById('print-calc-rec').textContent = document.getElementById('calc-recommendation').textContent + ' ' + document.getElementById('calc-profile-check').textContent;
+
+      // Taula Simulador
+      const simRows = [
+        ['Freqüència de prova', `${Math.round(state.sim.freq)} Hz`],
+        ['Retard aplicat (Δt)', `${state.sim.delayMs.toFixed(2)} ms`],
+        ['Nivell Font B vs A', `${state.sim.levelBDb.toFixed(1)} dB`],
+        ['Canal A / Canal B', `${state.sim.muteA ? 'MUTE' : 'ON'} / ${state.sim.muteB ? 'MUTE' : 'ON'}`],
+        ['Polaritat Font B', state.sim.polB ? 'Invertida (180°)' : 'Normal (0°)'],
+        ['Desfasament actual', `${Math.round(state.sim.phaseDeg)}°`],
+        ['Suma resultant', state.sim.gainDb <= -40 ? '-∞ dB' : `${state.sim.gainDb.toFixed(2)} dB`]
+      ];
+      document.getElementById('print-sim-table').innerHTML = simRows
+        .map(([k, v]) => `<tr class="border-b border-slate-200"><td class="py-1 text-slate-600">${k}</td><td class="py-1 font-mono font-bold text-right">${v}</td></tr>`)
+        .join('');
+      document.getElementById('print-comb-info').textContent = document.getElementById('comb-notches-info').textContent;
+
+      // Capturar imatges nítides dels Canvas
+      try {
+        document.getElementById('print-img-scope').src = document.getElementById('canvas-scope').toDataURL('image/png');
+        document.getElementById('print-img-phasor').src = document.getElementById('canvas-phasor').toDataURL('image/png');
+        document.getElementById('print-img-comb').src = document.getElementById('canvas-comb').toDataURL('image/png');
+      } catch (e) {}
+
+      // Petit retard perquè el navegador renderitzi les imatges base64 abans del diàleg d'impressió
+      setTimeout(() => {
+        window.print();
+      }, 120);
+    }
+
+    // =========================================================================
+    // 12. INICIALITZACIÓ I REDIMENSIONAMENT RESPONSIVE
+    // =========================================================================
+    window.addEventListener('resize', () => {
+      drawScope();
+      drawPhasor();
+      drawCombFilter();
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initApiKeyUI();
+      selectProfile('subtop', true);
+    });
+  </script>
+</body>
+</html>
